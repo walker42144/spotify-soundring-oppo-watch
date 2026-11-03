@@ -2,7 +2,7 @@ plugins { id("com.android.application"); id("org.jetbrains.kotlin.android") }
 android {
     namespace = "local.watchremote"
     compileSdk = 36
-    defaultConfig { applicationId = "local.watchremote"; minSdk = 30; targetSdk = 30; versionCode = 10; versionName = "1.0.7"; testInstrumentationRunner = "local.watchremote.ValidationInstrumentation" }
+    defaultConfig { applicationId = "local.watchremote"; minSdk = 30; targetSdk = 30; versionCode = 11; versionName = "1.0.8"; testInstrumentationRunner = "local.watchremote.ValidationInstrumentation" }
     buildFeatures { buildConfig = true }
     buildTypes {
         getByName("release") {

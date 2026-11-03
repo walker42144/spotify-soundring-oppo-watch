@@ -5,7 +5,7 @@
 )
 $ErrorActionPreference = 'Stop'
 if (!(Test-Path -LiteralPath $AdbPath)) { throw '找不到 adb.exe，请使用 -AdbPath 指定路径。' }
-$apk = if ($ApkPath) { $ApkPath } else { Join-Path (Split-Path $PSScriptRoot -Parent) 'SoundRing-X3-1.0.7.apk' }
+$apk = if ($ApkPath) { $ApkPath } else { Join-Path (Split-Path $PSScriptRoot -Parent) 'SoundRing-X3-1.0.8.apk' }
 if (!(Test-Path -LiteralPath $apk)) { throw '缺少安装包。' }
 $devices = @(& $AdbPath devices)
 $ready = @($devices | Where-Object { $_ -match '^\S+\s+device\s*$' } | ForEach-Object { ($_ -split '\s+')[0] })

@@ -1,7 +1,6 @@
 package local.watchremote
 
 import android.app.Activity
-import android.app.AlertDialog
 import android.content.*
 import android.graphics.Color
 import android.os.*
@@ -59,6 +58,14 @@ class MainActivity : Activity() {
     private var fallbackTitle: TextView? = null
     private var fallbackArtist: TextView? = null
     private var fallbackPlay: Button? = null
+    private var menu: WatchMenu? = null
+    private fun showMenu(title: String, message: String? = null, choices: List<WatchChoice>) {
+        menu?.dismiss()
+        val dialog = WatchMenu(this, title, message, choices)
+        menu = dialog
+        dialog.setOnDismissListener { if (menu === dialog) menu = null }
+        dialog.show()
+    }
     private var pair: PairServer? = null
     private lateinit var connectivity: ConnectivityManager
     private var networkRegistered = false
@@ -454,10 +461,12 @@ class MainActivity : Activity() {
                 val id = d.optString("id"); val name = d.optString("name", "播放设备")
                 val enabled = id.isNotBlank() && id != "null" && !d.optBoolean("is_restricted") && !d.optBoolean("is_active")
                 row(name, if (d.optBoolean("is_active")) "当前设备" else if (!enabled) "不允许远程控制" else "切换到这里", enabled) {
-                    AlertDialog.Builder(this).setMessage("将播放切换到 $name？")
-                        .setPositiveButton("切换") { _, _ -> mutate({ it.deviceId == id }, onSuccess = { back() }) {
+                    showMenu("切换设备", "将播放切换到 $name？", listOf(
+                        WatchChoice("切换到此设备", highlighted = true) { mutate({ it.deviceId == id }, onSuccess = { back() }) {
                             client.request("PUT", "/me/player", JSONObject().put("device_ids", JSONArray().put(id)).put("play", false))
-                        } }.setNegativeButton("取消", null).show()
+                        } },
+                        WatchChoice("取消") {}
+                    ))
                 }
             }
             row("刷新设备") { reloadPage() }
@@ -465,11 +474,14 @@ class MainActivity : Activity() {
     }
     private fun adjust() {
         row("表冠调节", "点按选择音量、进度或滚动") {
-            AlertDialog.Builder(this).setItems(arrayOf("滚动页面", "调节音量", "调节进度")) { _, which ->
-                crownMode = arrayOf("scroll", "volume", "seek")[which]
-                settings.edit().putBoolean("crown", true).putString("crownMode", crownMode).apply()
-                status?.text = "表冠：" + arrayOf("滚动", "音量", "进度")[which]
-            }.show()
+            val modes = listOf("scroll" to "滚动页面", "volume" to "调节音量", "seek" to "调节进度")
+            showMenu("表冠操作", choices = modes.map { (mode, title) ->
+                WatchChoice(title, highlighted = crownMode == mode, selected = crownMode == mode) {
+                    crownMode = mode
+                    settings.edit().putBoolean("crown", true).putString("crownMode", mode).apply()
+                    status?.text = "表冠：$title"
+                }
+            })
         }
         label("音量")
         volumeLabel = label("")
@@ -561,15 +573,17 @@ class MainActivity : Activity() {
         row("检测手表网络") { networkProbe() }
         row("电脑配对", "有效期 5 分钟") { startPairing() }
         row("退出登录") {
-            AlertDialog.Builder(this).setMessage("清除手表上的授权和封面缓存？")
-                .setPositiveButton("清除") { _, _ ->
+            showMenu("退出登录", "将清除手表上的授权和封面缓存。", listOf(
+                WatchChoice("确认退出", highlighted = true) {
                     pair?.close(); pair = null; pending?.let { ui.removeCallbacks(it) }; pending = null
                     worker.execute {
                         client.logout(); authorized = false; state = Playback()
                         images.execute { covers.clear() }
                         ui.post { lastError = null; navigate("settings") }
                     }
-                }.setNegativeButton("取消", null).show()
+                },
+                WatchChoice("取消") {}
+            ))
         }
         label("声环 ${BuildConfig.VERSION_NAME}\n声音由手机或电脑播放", 11f).setTextColor(MUTED)
     }
@@ -629,7 +643,7 @@ class MainActivity : Activity() {
         updateHome()
         if (::client.isInitialized) { if (pageReadFailed) pageRetry?.invoke() else refresh() }
     }
-    override fun onPause() { stopVisibleWork(); super.onPause() }
+    override fun onPause() { menu?.dismiss(); stopVisibleWork(); super.onPause() }
     override fun onBackPressed() { if (page != "home") back() else super.onBackPressed() }
     override fun dump(prefix: String, fd: java.io.FileDescriptor?, writer: java.io.PrintWriter, args: Array<out String>?) {
         super.dump(prefix, fd, writer, args)

@@ -12,7 +12,7 @@ SoundRing is a Spotify remote controller for the Chinese OPPO Watch X3, built wi
 
 ## 下载与入门
 
-在本仓库 **Releases** 下载 `SoundRing-X3-1.0.7-Windows.zip` 并完整解压。内含 APK、安装/卸载脚本、Windows 配对工具和教程。无需编译；不包含 Python、Android SDK 等第三方运行时。
+在本仓库 **Releases** 下载 `SoundRing-X3-1.0.8-Windows.zip` 并完整解压。内含 APK、安装/卸载脚本、Windows 配对工具和教程。无需编译；不包含 Python、Android SDK 等第三方运行时。
 
 首次使用请按顺序阅读 **[完整安装与授权教程](docs/SETUP.md)**。开发者见 [源码构建与测试](docs/DEVELOPMENT.md)，遇到问题见 [故障排查](docs/TROUBLESHOOTING.md)。
 
@@ -24,6 +24,7 @@ SoundRing is a Spotify remote controller for the Chinese OPPO Watch X3, built wi
 - 歌单分页、歌单播放、单曲播放；歌曲显示歌手。
 - 播放设备查看及转移；当前设备避免重复切换。
 - 逐级返回、歌单页码和滚动位置恢复；滑块松手后提交。
+- 统一黑底圆屏选择/确认菜单，绿色标识当前项，支持返回及取消。
 - 野兽派圆形图标、专辑取色动态背景、触觉与动画开关。
 - 前台同步、断网恢复、限流退避、封面缓存；息屏/离开页面停止周期刷新。
 

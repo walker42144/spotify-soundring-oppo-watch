@@ -287,3 +287,55 @@ internal class HomePanel(context: Context, val navigate: (String) -> Unit, val a
     }
     fun progress(state: Playback) { ring.sample(state) }
 }
+
+/** Round-screen modal shared by mode selection and confirmations. No platform grey list. */
+internal data class WatchChoice(val title: String, val highlighted: Boolean = false, val selected: Boolean = false, val action: () -> Unit)
+internal class WatchMenu(context: Context, title: String, message: String? = null, choices: List<WatchChoice>) : android.app.Dialog(context, android.R.style.Theme_Material_NoActionBar) {
+    private val list = ScrollView(context).apply { isVerticalScrollBarEnabled = false; isFillViewport = true; setBackgroundColor(INK) }
+    init {
+        val column = LinearLayout(context).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(context.dp(30), context.dp(8), context.dp(30), context.dp(30))
+        }
+        val heading = LinearLayout(context).apply { gravity = Gravity.CENTER_VERTICAL }
+        heading.addView(IconButton(context, "back", "关闭$title") { dismiss() }, LinearLayout.LayoutParams(context.dp(48), context.dp(48)))
+        heading.addView(watchText(context, title, 16f).apply {
+            gravity = Gravity.CENTER_VERTICAL or Gravity.START
+            typeface = Typeface.create("sans-serif-medium", Typeface.NORMAL)
+            maxLines = 2
+        }, LinearLayout.LayoutParams(0, -2, 1f))
+        column.addView(heading, LinearLayout.LayoutParams(-1, context.dp(48)))
+        if (message != null) column.addView(watchText(context, message, 13f).apply {
+            setTextColor(MUTED); setPadding(0, context.dp(8), 0, context.dp(10))
+        }, LinearLayout.LayoutParams(-1, -2))
+        choices.forEach { choice ->
+            column.addView(watchButton(context, choice.title + if (choice.selected) "  ✓" else "") {
+                dismiss(); choice.action()
+            }.apply {
+                minHeight = context.dp(48); gravity = Gravity.CENTER
+                setPadding(context.dp(10), context.dp(8), context.dp(10), context.dp(8))
+                isSelected = choice.selected
+                contentDescription = choice.title + if (choice.selected) "，当前选中" else ""
+                background = RippleDrawable(ColorStateList.valueOf(0x401ed760), shape(if (choice.highlighted) GREEN else PANEL, context.dp(28).toFloat()), null)
+                setTextColor(if (choice.highlighted) INK else WHITE)
+            }, LinearLayout.LayoutParams(-1, -2).apply { topMargin = context.dp(6) })
+        }
+        list.addView(column); setContentView(list)
+        setCanceledOnTouchOutside(false)
+        window?.apply {
+            setBackgroundDrawable(android.graphics.drawable.ColorDrawable(INK))
+            setDimAmount(0f); setLayout(-1, -1); setWindowAnimations(0)
+        }
+    }
+    override fun onStart() {
+        super.onStart(); window?.setLayout(-1, -1)
+        if (context.motionEnabled()) { list.alpha = 0f; list.animate().alpha(1f).setDuration(150).start() }
+    }
+    override fun onGenericMotionEvent(event: MotionEvent): Boolean {
+        if (event.action == MotionEvent.ACTION_SCROLL) {
+            val delta = event.getAxisValue(MotionEvent.AXIS_SCROLL).takeIf { it != 0f } ?: event.getAxisValue(MotionEvent.AXIS_VSCROLL)
+            if (delta != 0f) { list.smoothScrollBy(0, (-delta * context.dp(24)).toInt()); return true }
+        }
+        return super.onGenericMotionEvent(event)
+    }
+}
